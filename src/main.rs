@@ -6,58 +6,108 @@ use gio::prelude::*;
 use gtk::prelude::*;
 use gtk::{Application, ApplicationWindow};
 
-mod birthday;
+mod functions;
 
 fn main() {
     let application = Application::new(Some("net.forsaken-borders.candles"), Default::default()).expect("Failed to initialize GTK application");
     application.connect_activate(move |app| {
         let window = ApplicationWindow::new(app);
+        let scroll_window = gtk::ScrolledWindow::new::<gtk::Adjustment, gtk::Adjustment>(None, None);
+        let main_box = gtk::Box::new(gtk::Orientation::Vertical, 6);
+        let todays_birthdays = functions::get_birthdays();
+        let todays_label_box = gtk::Box::new(gtk::Orientation::Horizontal, 0);
+        let todays_label = gtk::Label::new(None);
+        let todays_list = gtk::ListBox::new();
+        let upcoming_birthdays = functions::get_upcoming_birthdays();
+        let upcoming_label_box = gtk::Box::new(gtk::Orientation::Horizontal, 0);
+        let upcoming_label = gtk::Label::new(None);
+        let upcoming_list = gtk::ListBox::new();
+        let all_birthdays = functions::get_birthday_list();
+        let all_label_box = gtk::Box::new(gtk::Orientation::Horizontal, 0);
+        let all_label = gtk::Label::new(None);
+        let all_list = gtk::ListBox::new();
+        if todays_birthdays.is_some() {
+            for person in todays_birthdays.unwrap() {
+                let label = gtk::Label::new(Some(person.as_str()));
+                let row = gtk::ListBoxRow::new();
+                label.set_line_wrap(true);
+                row.set_selectable(false);
+                row.set_can_focus(false);
+                row.set_property_margin(6);
+                row.add(&label);
+                todays_list.add(&row);
+            }
+        } else {
+            let label = gtk::Label::new(Some("No birthdays today!"));
+            let row = gtk::ListBoxRow::new();
+            label.set_line_wrap(true);
+            row.set_selectable(false);
+            row.set_can_focus(false);
+            row.set_property_margin(6);
+            row.add(&label);
+            todays_list.add(&row);
+        };
+        if upcoming_birthdays.is_some() {
+            for (person, birthdate) in upcoming_birthdays.unwrap() {
+                let label = gtk::Label::new(Some(format!("{} ({})", person, birthdate.format("%B %e")).as_str()));
+                let row = gtk::ListBoxRow::new();
+                label.set_line_wrap(true);
+                row.set_selectable(false);
+                row.set_can_focus(false);
+                row.set_property_margin(6);
+                row.add(&label);
+                upcoming_list.add(&row);
+            }
+        } else {
+            let label = gtk::Label::new(Some("No upcoming birthdays!"));
+            let row = gtk::ListBoxRow::new();
+            label.set_line_wrap(true);
+            row.set_selectable(false);
+            row.set_can_focus(false);
+            row.set_property_margin(6);
+            row.add(&label);
+            upcoming_list.add(&row);
+        };
+        if all_birthdays.is_some() {
+            for (person, birthdate) in all_birthdays.unwrap() {
+                let label = gtk::Label::new(Some(format!("{} ({})", person, birthdate.format("%B %e")).as_str()));
+                let row = gtk::ListBoxRow::new();
+                label.set_line_wrap(true);
+                row.set_selectable(false);
+                row.set_can_focus(false);
+                row.set_property_margin(6);
+                row.add(&label);
+                all_list.add(&row);
+            }
+        } else {
+            let label = gtk::Label::new(Some("No birthdays registered... Click the plus button to add some!"));
+            let row = gtk::ListBoxRow::new();
+            label.set_line_wrap(true);
+            row.set_selectable(false);
+            row.set_can_focus(false);
+            row.set_property_margin(6);
+            row.add(&label);
+            all_list.add(&row);
+        };
+        todays_label.set_markup("<b>Birthdays:</b>");
+        todays_label_box.pack_start(&todays_label, false, false, 0);
+        upcoming_label.set_markup("<b>Upcoming Birthdays:</b>");
+        upcoming_label_box.pack_start(&upcoming_label, false, false, 0);
+        all_label.set_markup("<b>All birthdays:</b>");
+        all_label_box.pack_start(&all_label, false, false, 0);
+        scroll_window.set_min_content_height(410);
+        main_box.add(&todays_label_box);
+        main_box.add(&todays_list);
+        main_box.add(&upcoming_label_box);
+        main_box.add(&upcoming_list);
+        main_box.add(&all_label_box);
+        main_box.add(&all_list);
+        scroll_window.add(&main_box);
+        window.add(&scroll_window);
         window.set_title("Candles: Birthday Reminder");
         window.set_default_size(600, 400);
-        window.set_icon_from_file("/usr/share/icons/Humanity/actions/64/help-about.svg").unwrap();
+        window.set_icon_from_file("/home/lunar/Pictures/Logos/Candles/vector/isolated-layout.svg").unwrap();
         window.set_border_width(10);
-        let birthday_list = gtk::ListBox::new();
-        for person in birthday::get_birthdays() {
-            birthday::send_birthday_notif(format!("It's {} birthday!", person));
-            let label = gtk::Label::new(Some(person.as_str()));
-            label.set_line_wrap(true);
-            let row = gtk::ListBoxRow::new();
-            row.set_selectable(false);
-            row.set_can_focus(false);
-            row.set_property_margin(6);
-            row.add(&label);
-            birthday_list.add(&row);
-        }
-        let upcoming_birthday_list = gtk::ListBox::new();
-        for (person, birthdate) in birthday::get_upcoming_birthdays() {
-            birthday::send_birthday_notif(format!("{}'s Birthday is coming up on {}", person, birthdate.format("%B %e")));
-            let label = gtk::Label::new(Some(format!("{} ({})", person, birthdate.format("%B %e")).as_str()));
-            label.set_line_wrap(true);
-            let row = gtk::ListBoxRow::new();
-            row.set_selectable(false);
-            row.set_can_focus(false);
-            row.set_property_margin(6);
-            row.add(&label);
-            upcoming_birthday_list.add(&row);
-        }
-        let main_box = gtk::Box::new(gtk::Orientation::Vertical, 6);
-        //create Birthday Label Box
-        let birthday_label_box = gtk::Box::new(gtk::Orientation::Horizontal, 0);
-        //create Birthday Label
-        let birthday_label = gtk::Label::new(None);
-        birthday_label.set_markup("<b>Birthdays:</b>");
-        birthday_label_box.pack_start(&birthday_label, false, false, 0);
-        //create Upcoming Birthday Label Box
-        let upcoming_birthdays_label_box = gtk::Box::new(gtk::Orientation::Horizontal, 0);
-        //create Upcoming Birthday Label
-        let upcoming_birthday_label = gtk::Label::new(None);
-        upcoming_birthday_label.set_markup("<b>Upcoming Birthdays:</b>");
-        upcoming_birthdays_label_box.pack_start(&upcoming_birthday_label, false, false, 0);
-        main_box.add(&birthday_label_box);
-        main_box.add(&birthday_list);
-        main_box.add(&upcoming_birthdays_label_box);
-        main_box.add(&upcoming_birthday_list);
-        window.add(&main_box);
         window.show_all();
     });
     application.run(&[]);
