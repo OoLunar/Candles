@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net5.0</TargetFramework>
+        <RootNamespace>Candles</RootNamespace>
+    </PropertyGroup>
+    <ItemGroup>
+      <PackageReference Include="GtkSharp" Version="3.24.24.4" />
+    </ItemGroup>
+</Project>
