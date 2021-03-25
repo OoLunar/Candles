@@ -10,11 +10,21 @@ namespace Candles
 {
 	public class Program
 	{
+		/// <summary>
+		/// Holds all the birthdays.
+		/// </summary>
 		public static List<Birthday> Birthdays { get; internal set; } = new();
+
+		/// <summary>
+		/// Creates the GUI and gets objects from the GUI.
+		/// </summary>
 		public static readonly Builder Builder = new(File.OpenRead("res/gui.glade"));
+
+		/// <summary>
+		/// The path to the birthday JSON file.
+		/// </summary>
 		public static readonly string BirthdayFile = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "./ForSaken Borders/Candles/birthdays.json");
 
-		// TODO: Send toast notifications on whose birthdays it is on startup.
 		// TODO: Additionally create command line args that allows to get a list of whose birthdays it is
 		// TODO: Export the birthdays into a variety of formats. Yaml, SQLite, CSV, Excel, etc
 		// TODO: Error proof your application as much as possible.
@@ -38,9 +48,19 @@ namespace Candles
 			Application.Run();
 		}
 
-		public static void OpenBirthdayPrompt(object sender, EventArgs eventArgs) => (Builder.GetObject("dialog_window") as Dialog).ShowAll();
+		/// <summary>
+		/// Opens the dialog window to add a birthday.
+		/// </summary>
+		/// <param name="_sender">Unused.</param>
+		/// <param name="_eventArgs">Unused.</param>
+		public static void OpenBirthdayPrompt(object _sender, EventArgs _eventArgs) => (Builder.GetObject("dialog_window") as Dialog).ShowAll();
 
-		public static void ClosePromptWindow(object sender, EventArgs eventArgs)
+		/// <summary>
+		/// Cancels adding a birthday and closes the dialog window. Resets the calendar to local time and resets the name to John Doe.
+		/// </summary>
+		/// <param name="_sender">Unused.</param>
+		/// <param name="_eventArgs">Unused.</param>
+		public static void ClosePromptWindow(object _sender, EventArgs _eventArgs)
 		{
 			(Builder.GetObject("dialog_window") as Dialog).Hide();
 			Entry entry = Builder.GetObject("dialog_entry") as Entry;
@@ -49,6 +69,9 @@ namespace Candles
 			calendar.Date = DateTime.Now;
 		}
 
+		/// <summary>
+		/// Reads the birthdays from <see cref="BirthdayFile"/> and sorts them into <see cref="Birthdays"/>.
+		/// </summary>
 		public static void Reload()
 		{
 			// Get birthday lists
