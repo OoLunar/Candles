@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Linq;
+using System.Text;
 using System.Text.Json;
-using GLib;
 using Gtk;
 
 namespace Candles
@@ -12,89 +11,68 @@ namespace Candles
 	public class Program
 	{
 		public static List<Birthday> Birthdays { get; private set; } = new();
-		private static readonly Builder builder = new(File.OpenRead("res/gui.glade"));
-		private static readonly string birthdayFile = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "./ForSaken Borders/Candles/birthdays.json");
+		public static readonly Builder Builder = new(File.OpenRead("res/gui.glade"));
+		public static readonly string BirthdayFile = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "./ForSaken Borders/Candles/birthdays.json");
 
+		// TODO: Send toast notifications on whose birthdays it is on startup.
+		// TODO: Additionally create command line args that allows to get a list of whose birthdays it is
+		// TODO: Export the birthdays into a variety of formats. Yaml, SQLite, CSV, Excel, etc
+		// TODO: Error proof your application as much as possible.
+		// TODO: Make a sort option on the last list that contains all the birthdays.
+		// TODO: Application settings. Default sort option, birthday format, light & dark mode, *maybe* change application layout?
+		// TODO: Documentation
 		public static void Main(string[] args)
 		{
-			Gtk.Application.Init("Candles", ref args);
-
-			ApplicationWindow applicationWindow = builder.GetObject("window") as ApplicationWindow;
-			Button addBirthdayPrompt = builder.GetObject("add_birthday") as Button;
-			Button cancelBirthdayPrompt = builder.GetObject("cancel_button") as Button;
-			Button addBirthday = builder.GetObject("ok_button") as Button;
+			Application.Init("Candles", ref args);
+			ApplicationWindow applicationWindow = Builder.GetObject("window") as ApplicationWindow;
+			Button addBirthdayPrompt = Builder.GetObject("add_birthday") as Button;
+			Button cancelBirthdayPrompt = Builder.GetObject("cancel_button") as Button;
+			Button addBirthday = Builder.GetObject("ok_button") as Button;
 			Reload();
 			addBirthdayPrompt.Clicked += OpenBirthdayPrompt;
 			cancelBirthdayPrompt.Clicked += ClosePromptWindow;
-			addBirthday.Clicked += AddBirthday;
-			applicationWindow.DeleteEvent += Exit;
+			addBirthday.Clicked += ExtensionMethods.AddBirthday;
+			applicationWindow.DeleteEvent += ExtensionMethods.Exit;
 			applicationWindow.ShowAll();
-			Gtk.Application.Run();
+			Application.Run();
 		}
 
-		public static void OpenBirthdayPrompt(object sender, EventArgs eventArgs) => (builder.GetObject("dialog_window") as Dialog).ShowAll();
+		public static void OpenBirthdayPrompt(object sender, EventArgs eventArgs) => (Builder.GetObject("dialog_window") as Dialog).ShowAll();
 
 		public static void ClosePromptWindow(object sender, EventArgs eventArgs)
 		{
-			(builder.GetObject("dialog_window") as Dialog).Hide();
-			Entry entry = builder.GetObject("dialog_entry") as Entry;
+			(Builder.GetObject("dialog_window") as Dialog).Hide();
+			Entry entry = Builder.GetObject("dialog_entry") as Entry;
 			entry.Text = string.Empty;
-			Gtk.Calendar calendar = builder.GetObject("dialog_calendar") as Gtk.Calendar;
-			calendar.Date = System.DateTime.Now;
-		}
-
-		public static void RemoveBirthday(object sender, EventArgs eventArgs)
-		{
-			Button button = sender as Button;
-			Label label = (button.Parent as Box).Children[0] as Label;
-			// If there's two of the same names on the list with the same birthday, it'll remove the first one found.
-			// TODO: Fix this by assigning each row an id.
-			_ = Birthdays.Remove(Birthdays.First(bday => $"{bday.Name} ({bday.Date.ToString("m", CultureInfo.InvariantCulture)})" == label.Text));
-			File.WriteAllText(birthdayFile, JsonSerializer.Serialize(Birthdays));
-			Reload();
-		}
-
-		public static void Exit(object sender, EventArgs eventArgs)
-		{
-			// TODO: Make this into a stream instead.
-			File.WriteAllText(birthdayFile, JsonSerializer.Serialize(Birthdays));
-			Gtk.Application.Quit();
-			Environment.Exit(0);
-		}
-
-		public static void AddBirthday(object sender, EventArgs eventArgs)
-		{
-			Entry entry = builder.GetObject("dialog_entry") as Entry;
-			Gtk.Calendar calendar = builder.GetObject("dialog_calendar") as Gtk.Calendar;
-			Birthday birthday = new(entry.Text, calendar.Date);
-			// TODO: No need to add to list, find an alternative route.
-			// TODO: Make this into a stream instead.
-			Birthdays.Add(birthday);
-			File.WriteAllText(birthdayFile, JsonSerializer.Serialize(Birthdays));
-			ClosePromptWindow(sender, eventArgs);
-			Reload();
+			Gtk.Calendar calendar = Builder.GetObject("dialog_calendar") as Gtk.Calendar;
+			calendar.Date = DateTime.Now;
 		}
 
 		public static void Reload()
 		{
 			// Get birthday lists
-			ListBox currentBirthdays = builder.GetObject("today_list") as ListBox;
-			ListBox upcomingBirthdays = builder.GetObject("upcoming_list") as ListBox;
-			ListBox allBirthdays = builder.GetObject("all_list") as ListBox;
+			ListBox currentBirthdays = Builder.GetObject("today_list") as ListBox;
+			ListBox upcomingBirthdays = Builder.GetObject("upcoming_list") as ListBox;
+			ListBox allBirthdays = Builder.GetObject("all_list") as ListBox;
+
 			// Clear all birthdays
 			currentBirthdays.Foreach(child => currentBirthdays.Remove(child));
 			upcomingBirthdays.Foreach(child => upcomingBirthdays.Remove(child));
 			allBirthdays.Foreach(child => allBirthdays.Remove(child));
+
 			// Get birthdays from file
-			if (!File.Exists(birthdayFile))
+			string birthdayFileDir = Path.GetDirectoryName(BirthdayFile);
+			// TODO: Could be combined into one if statement?
+			if (!Directory.Exists(birthdayFileDir)) _ = Directory.CreateDirectory(birthdayFileDir);
+			if (!File.Exists(BirthdayFile))
 			{
-				// TODO: Make this more efficient. This is ridiculous.
-				_ = Directory.CreateDirectory(Directory.GetParent(birthdayFile).FullName);
-				File.Create(birthdayFile).Close();
-				File.WriteAllText(birthdayFile, "[]");
+				FileStream openFile = File.Create(BirthdayFile);
+				openFile.Write(Encoding.UTF8.GetBytes("[]"));
+				openFile.Close();
 			}
 
-			Birthdays = JsonSerializer.Deserialize<List<Birthday>>(File.ReadAllBytes(birthdayFile), new()
+			// TODO: Read from stream instead of reading it all into memory. Can be done by using the async version
+			Birthdays = JsonSerializer.Deserialize<List<Birthday>>(File.ReadAllBytes(BirthdayFile), new()
 			{
 				IncludeFields = true,
 				AllowTrailingCommas = true,
@@ -118,7 +96,7 @@ namespace Candles
 				Button button = new("gtk-remove", IconSize.Button);
 				button.Halign = Align.End;
 				button.FocusOnClick = false;
-				button.Clicked += RemoveBirthday;
+				button.Clicked += ExtensionMethods.RemoveBirthday;
 
 				Label label = new($"{birthday.Name} ({birthday.Date.ToString("m", CultureInfo.InvariantCulture)})");
 				label.LineWrap = true;
