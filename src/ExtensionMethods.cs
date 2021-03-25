@@ -25,18 +25,18 @@ namespace Candles
 
 		public static void Exit(object sender, EventArgs eventArgs)
 		{
-			File.WriteAllText(Program.BirthdayFile, JsonSerializer.Serialize(Program.Birthdays));
+			SaveFile();
 			Application.Quit();
 		}
 
 		public static void AddBirthday(object sender, EventArgs eventArgs)
 		{
 			Entry entry = Program.Builder.GetObject("dialog_entry") as Entry;
+			if (entry.Text == null) entry.Text = "John Doe";
 			Gtk.Calendar calendar = Program.Builder.GetObject("dialog_calendar") as Gtk.Calendar;
 			Birthday birthday = new(entry.Text, calendar.Date);
-			// TODO: Shouldn't need to add to list, try to find an alternative route.
 			Program.Birthdays.Add(birthday);
-			File.WriteAllText(Program.BirthdayFile, JsonSerializer.Serialize(Program.Birthdays));
+			SaveFile();
 			Program.ClosePromptWindow(sender, eventArgs);
 			Program.Reload();
 		}
@@ -49,8 +49,24 @@ namespace Candles
 			// Unsure if this is an issue, or if it'll even affect the user.
 			// TODO: Find a better/more accurate way to compare the rows.
 			_ = Program.Birthdays.Remove(Program.Birthdays.First(bday => $"{bday.Name} ({bday.Date.ToString("m", CultureInfo.InvariantCulture)})" == label.Text));
-			File.WriteAllText(Program.BirthdayFile, JsonSerializer.Serialize(Program.Birthdays));
+			SaveFile();
 			Program.Reload();
 		}
+
+		public static void SortBirthdays()
+		{
+			ComboBoxText sortingMethod = Program.Builder.GetObject("sorting_methods") as ComboBoxText;
+			Program.Birthdays = sortingMethod.ActiveId switch
+			{
+				// TODO: Try to refrain from creating a new list
+				"name" => Program.Birthdays.OrderBy(bday => bday.Name).ToList(),
+				"reverse_name" => Program.Birthdays.OrderBy(bday => bday.Name).Reverse().ToList(),
+				"date" => Program.Birthdays.OrderBy(bday => bday.Date).ToList(),
+				"reverse_date" => Program.Birthdays.OrderBy(bday => bday.Date).Reverse().ToList(),
+				_ => Program.Birthdays.OrderBy(bday => bday.Name).ToList()
+			};
+		}
+
+		public static void SaveFile() => File.WriteAllText(Program.BirthdayFile, JsonSerializer.Serialize(Program.Birthdays));
 	}
 }

@@ -10,7 +10,7 @@ namespace Candles
 {
 	public class Program
 	{
-		public static List<Birthday> Birthdays { get; private set; } = new();
+		public static List<Birthday> Birthdays { get; internal set; } = new();
 		public static readonly Builder Builder = new(File.OpenRead("res/gui.glade"));
 		public static readonly string BirthdayFile = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "./ForSaken Borders/Candles/birthdays.json");
 
@@ -18,7 +18,6 @@ namespace Candles
 		// TODO: Additionally create command line args that allows to get a list of whose birthdays it is
 		// TODO: Export the birthdays into a variety of formats. Yaml, SQLite, CSV, Excel, etc
 		// TODO: Error proof your application as much as possible.
-		// TODO: Make a sort option on the last list that contains all the birthdays.
 		// TODO: Application settings. Default sort option, birthday format, light & dark mode, *maybe* change application layout?
 		// TODO: Documentation
 		public static void Main(string[] args)
@@ -28,10 +27,12 @@ namespace Candles
 			Button addBirthdayPrompt = Builder.GetObject("add_birthday") as Button;
 			Button cancelBirthdayPrompt = Builder.GetObject("cancel_button") as Button;
 			Button addBirthday = Builder.GetObject("ok_button") as Button;
+			ComboBoxText sortingMethod = Builder.GetObject("sorting_methods") as ComboBoxText;
 			Reload();
 			addBirthdayPrompt.Clicked += OpenBirthdayPrompt;
 			cancelBirthdayPrompt.Clicked += ClosePromptWindow;
 			addBirthday.Clicked += ExtensionMethods.AddBirthday;
+			sortingMethod.Changed += (sender, eventArgs) => Reload();
 			applicationWindow.DeleteEvent += ExtensionMethods.Exit;
 			applicationWindow.ShowAll();
 			Application.Run();
@@ -80,7 +81,7 @@ namespace Candles
 				PropertyNameCaseInsensitive = true
 			});
 
-			// Sort birthdays into lists
+			ExtensionMethods.SortBirthdays();
 			foreach (Birthday birthday in Birthdays)
 			{
 				if (birthday.IsToday())

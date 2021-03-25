@@ -38,7 +38,9 @@ Author: Lunar Starstrum <lunar@forsaken-borders.net>
         <property name="title" translatable="yes">Add Birthday - Candles</property>
         <property name="icon">res/candles.svg</property>
         <property name="type_hint">dialog</property>
-        <child type="titlebar">Add Birthday - Candles</child>
+        <child type="titlebar">
+            <placeholder/>
+        </child>
         <child internal-child="vbox">
             <object class="GtkBox" id="dialog_box">
                 <property name="can_focus">False</property>
@@ -161,7 +163,7 @@ Author: Lunar Starstrum <lunar@forsaken-borders.net>
     <object class="GtkApplicationWindow" id="window">
         <property name="can_focus">False</property>
         <property name="border_width">10</property>
-        <property name="title" translatable="yes">Candles: Birthday Reminder</property>
+        <property name="title" translatable="yes">Candles</property>
         <property name="window_position">center</property>
         <property name="default_width">600</property>
         <property name="default_height">400</property>
@@ -291,7 +293,7 @@ Author: Lunar Starstrum <lunar@forsaken-borders.net>
                                                     <object class="GtkLabel">
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">False</property>
-                                                        <property name="margin_left">5</property>
+                                                        <property name="margin_right">5</property>
                                                         <property name="label" translatable="yes">&lt;b&gt;All Birthdays:&lt;/b&gt;</property>
                                                         <property name="use_markup">True</property>
                                                     </object>
@@ -308,7 +310,7 @@ Author: Lunar Starstrum <lunar@forsaken-borders.net>
                                                         <property name="can_focus">True</property>
                                                         <property name="focus_on_click">False</property>
                                                         <property name="receives_default">True</property>
-                                                        <property name="margin_left">10</property>
+                                                        <property name="margin_right">5</property>
                                                         <property name="use_stock">True</property>
                                                         <property name="always_show_image">True</property>
                                                         <signal name="clicked" handler="add_birthday" swapped="no"/>
@@ -320,7 +322,23 @@ Author: Lunar Starstrum <lunar@forsaken-borders.net>
                                                     </packing>
                                                 </child>
                                                 <child>
-                                                    <placeholder/>
+                                                    <object class="GtkComboBoxText" id="sorting_methods">
+                                                        <property name="visible">True</property>
+                                                        <property name="can_focus">False</property>
+                                                        <property name="active">0</property>
+                                                        <property name="active_id">name</property>
+                                                        <items>
+                                                            <item id="name" translatable="yes">Name</item>
+                                                            <item id="reverse_name" translatable="yes">Reverse Name</item>
+                                                            <item id="date" translatable="yes">Date</item>
+                                                            <item id="reverse_date" translatable="yes">Reverse Date</item>
+                                                        </items>
+                                                    </object>
+                                                    <packing>
+                                                        <property name="expand">True</property>
+                                                        <property name="fill">True</property>
+                                                        <property name="position">2</property>
+                                                    </packing>
                                                 </child>
                                             </object>
                                             <packing>
